@@ -30,9 +30,9 @@ model Comment {
     createdAt DateTime @default(now())
 
     content String @db.LongText()
+    commentPath String @db.LongText()
 
     votes Vote[]
-
     authorId String
 
     @@index([authorId])
