@@ -51,7 +51,6 @@ export const postRouter = createTRPCRouter({
       );
       if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
 
-      /* eslint-disable */ // Error: Unsafe return of an `any` typed value. Probably related to prisma.schema
       return ctx.db.vote.create({
         data: {
           post: { connect: { id: input.postId } },
@@ -116,9 +115,9 @@ const postsWithAuthorAndVotes = async (
     await clerkClient.users.getUserList({
       userId: posts.reduce<string[]>(
         (ids, p) =>
-          ids.includes(p.authorId as string)
+          ids.includes(p.authorId)
             ? ids
-            : [...ids, p.authorId as string],
+            : [...ids, p.authorId],
         [],
       ),
     })
@@ -138,11 +137,10 @@ const postsWithAuthorAndVotes = async (
     let myVote = 0;
 
     // @TODO: fix typescript not properly getting prisma types.
-    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
     post.votes.forEach((v: Vote) => {
       // save current user vote for later
       if (v.authorId === currentUserId && v.value) {
-        myVote = v.value as number;
+        myVote = v.value;
       }
       // cumulate value
       valuation += v.value;
