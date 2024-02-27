@@ -1,9 +1,8 @@
 import Image from "next/image";
-import { comment } from "postcss";
 import { type RouterOutputs, api } from "~/utils/api";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Fragment, createContext, useState } from "react";
+import { Fragment, useState } from "react";
 import CommentForm from "../CommentForm/CommentForm";
 
 dayjs.extend(relativeTime);
@@ -14,8 +13,6 @@ const COMMENT_PATH_SEPARATOR = "|";
 
 const parseDepth = (commentPath: string) =>
   commentPath.split(COMMENT_PATH_SEPARATOR).length;
-
-const rctx = createContext([]);
 
 export default function CommentsList({ commentPath }: { commentPath: string }) {
   const { data, isLoading: postsLoading } = api.comment.getByPath.useQuery({
@@ -36,8 +33,6 @@ export default function CommentsList({ commentPath }: { commentPath: string }) {
       return acc;
     }, {}) ?? {};
 
-  console.log(grouppedComments);
-
   return (
     <div>
       {Object.keys(grouppedComments).map((path) => {
@@ -50,7 +45,7 @@ export default function CommentsList({ commentPath }: { commentPath: string }) {
             hierarchyData={grouppedComments}
           />
         ) : (
-          <></>
+          null
         );
       })}
     </div>
@@ -92,7 +87,7 @@ const Comments = ({
 
 const Comment = ({ data, depth }: { data: FullCommentData; depth: number }) => {
   const [voting, setVoting] = useState(false);
-  const { comment, author, valuation, myVote } = data;
+  const { comment, valuation, myVote } = data;
 
   const ctx = api.useUtils();
   const voteComment = api.comment.vote.useMutation({
