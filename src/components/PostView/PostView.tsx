@@ -2,13 +2,24 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
 import Link from "next/link";
-import type { RouterOutputs } from "~/utils/api";
+import { useState } from "react";
+import { api, type RouterOutputs } from "~/utils/api";
 
 dayjs.extend(relativeTime);
 
-type PostAndUser = RouterOutputs["post"]["getLatest"][number];
+type PostAndUser = RouterOutputs["post"]["getById"][number];
 export default function PostView(props: PostAndUser) {
-  const { post, author } = props;
+  const [voting, setVoting] = useState(false);
+  const { post, author, valuation, myVote } = props;
+
+  const votePost = api.post.vote.useMutation({
+    onSuccess: () => {
+      setVoting(false);
+      // router.refresh();
+      // setTitle("");
+      // setContent("");
+    },
+  });
 
   return (
     <>
@@ -26,7 +37,27 @@ export default function PostView(props: PostAndUser) {
         </div>
       </Link>
       <div>
-        <span>⥣</span> 0<span>⥥</span>
+        <button
+          style={{ color: myVote > 0 ? "blue" : "inherit" }}
+          disabled={voting}
+          onClick={() => {
+            !myVote && votePost.mutate({ postId: post.id, valuation: 1 });
+            setVoting(true);
+          }}
+        >
+          ⥣
+        </button>
+        {valuation}
+        <button
+          style={{ color: myVote < 0 ? "blue" : "inherit" }}
+          disabled={voting}
+          onClick={() => {
+            !myVote && votePost.mutate({ postId: post.id, valuation: -1 });
+            setVoting(true);
+          }}
+        >
+          ⥥
+        </button>
       </div>
       <Link href={`/posts/${post.id}`}>
         <p>{post.title}</p>

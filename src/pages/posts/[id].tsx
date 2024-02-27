@@ -9,6 +9,7 @@ const Post = () => {
   const { data, isLoading: postsLoading } = api.post.getById.useQuery({
     postId: router.query.id as string,
   });
+  
   return (
     <>
       <Head>

@@ -1,37 +1,22 @@
 import { clerkClient } from "@clerk/nextjs";
-import type { User } from "@clerk/nextjs/server";
-import type { Post } from "@prisma/client";
+import type { Post, Vote, Prisma } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  privateProcedure,
+  publicProcedure,
+} from "~/server/api/trpc";
 
 import { Ratelimit } from "@upstash/ratelimit"; // for deno: see above
 import { Redis } from "@upstash/redis"; // see below for cloudflare and fastly adapters
+import { filterUserForClient } from "~/utils/helpers";
 
-// Create a new ratelimiter, that allows 3 requests per 1 minute
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(3, "1 m"),
-  analytics: true,
-  /**
-   * Optional prefix for the keys used in redis. This is useful if you want to share a redis
-   * instance with other applications and want to avoid key collisions. The default prefix is
-   * "@upstash/ratelimit"
-   */
-  prefix: "@upstash/ratelimit",
-});
+type PostWithVotes = Post & { Vote: Vote[] };
 
 export const postRouter = createTRPCRouter({
-  hello: publicProcedure
-    .input(z.object({ text: z.string() }))
-    .query(({ input }) => {
-      return {
-        greeting: `Hello ${input.text}`,
-      };
-    }),
-
-  create: publicProcedure
+  create: privateProcedure
     .input(
       z.object({
         title: z.string().min(1).max(140),
@@ -42,9 +27,9 @@ export const postRouter = createTRPCRouter({
       // simulate a slow db call
       // await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const authorId = ctx.userId!;
+      const authorId = ctx.userId;
 
-      const { success } = await ratelimit.limit(authorId);
+      const { success } = await ratelimitPost.limit(authorId);
       if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
 
       return ctx.db.post.create({
@@ -56,24 +41,50 @@ export const postRouter = createTRPCRouter({
       });
     }),
 
+  vote: privateProcedure
+    .input(z.object({ postId: z.string(), valuation: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const authorId = ctx.userId;
+
+      const { success } = await ratelimitVote.limit(
+        `${authorId}-${input.postId}`,
+      );
+      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+
+      /* eslint-disable */ // Error: Unsafe return of an `any` typed value. Probably related to prisma.schema
+      return ctx.db.vote.create({
+        data: {
+          post: { connect: { id: input.postId } },
+          value: input.valuation,
+          authorId,
+        },
+      });
+    }),
+
   getById: publicProcedure
-    .input(z.object({ postId: z.string() }))
+    .input(z.object({ postId: z.string().optional() }))
     .query(async ({ ctx, input }) => {
-      const post = await ctx.db.post.findFirst({
+      const post = (await ctx.db.post.findFirst({
+        include: {
+          Vote: true,
+        },
         where: {
           id: input.postId,
         },
-      });
+      })) as Prisma.PostGetPayload<{ include: { Vote: true } }>;
 
       if (!post) throw new TRPCError({ code: "NOT_FOUND" });
 
-      return postsWithAuthor([post]);
+      return await postsWithAuthorAndVotes([post], ctx.userId ?? "");
     }),
 
   getByUser: publicProcedure
     .input(z.object({ authorId: z.string() }))
     .query(async ({ ctx, input }) => {
       const posts = await ctx.db.post.findMany({
+        include: {
+          Vote: true,
+        },
         where: {
           authorId: input.authorId,
         },
@@ -81,20 +92,26 @@ export const postRouter = createTRPCRouter({
         take: 10,
       });
 
-      return postsWithAuthor(posts);
+      return await postsWithAuthorAndVotes(posts, ctx.userId ?? "");
     }),
 
   getLatest: publicProcedure.query(async ({ ctx }) => {
     const posts = await ctx.db.post.findMany({
+      include: {
+        Vote: true,
+      },
       orderBy: { createdAt: "desc" },
       take: 10,
     });
 
-    return postsWithAuthor(posts);
+    return await postsWithAuthorAndVotes(posts, ctx.userId ?? "");
   }),
 });
 
-const postsWithAuthor = async (posts: Post[]) => {
+const postsWithAuthorAndVotes = async (
+  posts: PostWithVotes[],
+  currentUserId: string,
+) => {
   const users = (
     await clerkClient.users.getUserList({
       userId: posts.reduce<string[]>(
@@ -116,20 +133,51 @@ const postsWithAuthor = async (posts: Post[]) => {
         message: "Post author not found",
       });
 
+    // final valuation across all the votes
+    let valuation = 0;
+    let myVote = 0;
+
+    // @TODO: fix typescript not properly getting prisma types.
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+    post.Vote.forEach((v: Vote) => {
+      // save current user vote for later
+      if (v.authorId === currentUserId && v.value) {
+        myVote = v.value as number;
+      }
+      // cumulate value
+      valuation += v.value;
+    });
+
     return {
       post,
       author,
+      valuation,
+      myVote,
     };
   });
 };
 
-const getDisplayName = (user: User) =>
-  `${user.firstName} ${user.lastName?.substring(0, 1)}.`;
-
-const filterUserForClient = (user: User) => {
-  return {
-    id: user.id,
-    username: getDisplayName(user),
-    imageUrl: user.imageUrl,
-  };
-};
+// Create a new ratelimiter, that allows 3 requests per 1 minute
+const ratelimitPost = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(3, "1 m"),
+  analytics: true,
+  /**
+   * Optional prefix for the keys used in redis. This is useful if you want to share a redis
+   * instance with other applications and want to avoid key collisions. The default prefix is
+   * "@upstash/ratelimit"
+   */
+  prefix: "@upstash/ratelimit",
+});
+// Create a new ratelimiter, that allows 1 request per second
+const ratelimitVote = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(1, "1 s"),
+  analytics: true,
+  /**
+   * Optional prefix for the keys used in redis. This is useful if you want to share a redis
+   * instance with other applications and want to avoid key collisions. The default prefix is
+   * "@upstash/ratelimit"
+   */
+  prefix: "@upstash/ratelimit",
+});
