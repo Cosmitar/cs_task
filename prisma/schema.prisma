@@ -20,7 +20,7 @@ model Post {
     content String @db.LongText()
 
     authorId String
-    Vote     Vote[]
+    votes     Vote[]
 
     @@index([authorId])
 }

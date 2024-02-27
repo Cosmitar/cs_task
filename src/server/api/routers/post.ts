@@ -13,7 +13,7 @@ import { Ratelimit } from "@upstash/ratelimit"; // for deno: see above
 import { Redis } from "@upstash/redis"; // see below for cloudflare and fastly adapters
 import { filterUserForClient } from "~/utils/helpers";
 
-type PostWithVotes = Post & { Vote: Vote[] };
+type PostWithVotes = Prisma.PostGetPayload<{ include: { votes: true } }>;
 
 export const postRouter = createTRPCRouter({
   create: privateProcedure
@@ -64,14 +64,14 @@ export const postRouter = createTRPCRouter({
   getById: publicProcedure
     .input(z.object({ postId: z.string().optional() }))
     .query(async ({ ctx, input }) => {
-      const post = (await ctx.db.post.findFirst({
+      const post = await ctx.db.post.findFirst({
         include: {
-          Vote: true,
+          votes: true,
         },
         where: {
           id: input.postId,
         },
-      })) as Prisma.PostGetPayload<{ include: { Vote: true } }>;
+      });
 
       if (!post) throw new TRPCError({ code: "NOT_FOUND" });
 
@@ -83,7 +83,7 @@ export const postRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const posts = await ctx.db.post.findMany({
         include: {
-          Vote: true,
+          votes: true,
         },
         where: {
           authorId: input.authorId,
@@ -98,7 +98,7 @@ export const postRouter = createTRPCRouter({
   getLatest: publicProcedure.query(async ({ ctx }) => {
     const posts = await ctx.db.post.findMany({
       include: {
-        Vote: true,
+        votes: true,
       },
       orderBy: { createdAt: "desc" },
       take: 10,
@@ -139,7 +139,7 @@ const postsWithAuthorAndVotes = async (
 
     // @TODO: fix typescript not properly getting prisma types.
     /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-    post.Vote.forEach((v: Vote) => {
+    post.votes.forEach((v: Vote) => {
       // save current user vote for later
       if (v.authorId === currentUserId && v.value) {
         myVote = v.value as number;
