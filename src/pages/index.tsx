@@ -1,13 +1,11 @@
-import { SignInButton, SignOutButton, useUser } from "@clerk/nextjs";
 import Head from "next/head";
+import { PostForm } from "~/components/PostForm/PostForm";
 import PostView from "~/components/PostView/PostView";
 import Sidebar from "~/components/Sidebar/Sidebar";
 
 import { api } from "~/utils/api";
 
 export default function Home() {
-  const user = useUser();
-
   return (
     <>
       <Head>
@@ -29,10 +27,13 @@ const CrudShowcase = () => {
   const { data, isLoading: postsLoading } = api.post.getLatest.useQuery();
 
   return (
-    <div className="w-full max-w-xs">
-      {data?.map((postAndAuthor) => (
-        <PostView key={postAndAuthor.post.id} {...postAndAuthor} />
-      ))}
+    <div>
+      <div className="w-full max-w-xs">
+        {data?.map((postAndAuthor) => (
+          <PostView key={postAndAuthor.post.id} {...postAndAuthor} />
+        ))}
+      </div>
+      <PostForm />
     </div>
   );
 };
