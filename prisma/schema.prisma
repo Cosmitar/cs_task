@@ -20,6 +20,37 @@ model Post {
     content String @db.LongText()
 
     authorId String
+    Vote     Vote[]
 
+    @@index([authorId])
+}
+
+model Comment {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+
+    content String @db.LongText()
+
+    votes Vote[]
+
+    authorId String
+
+    @@index([authorId])
+}
+
+model Vote {
+    id        Int      @id @default(autoincrement())
+    value     Int      @default(0)
+    createdAt DateTime @default(now())
+
+    authorId String
+    post     Post?   @relation(fields: [postId], references: [id])
+    postId   String?
+
+    comment   Comment? @relation(fields: [commentId], references: [id])
+    commentId String?
+
+    @@index([postId])
+    @@index([commentId])
     @@index([authorId])
 }

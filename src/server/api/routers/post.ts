@@ -56,6 +56,34 @@ export const postRouter = createTRPCRouter({
       });
     }),
 
+  getById: publicProcedure
+    .input(z.object({ postId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const post = await ctx.db.post.findFirst({
+        where: {
+          id: input.postId,
+        },
+      });
+
+      if (!post) throw new TRPCError({ code: "NOT_FOUND" });
+
+      return postsWithAuthor([post]);
+    }),
+
+  getByUser: publicProcedure
+    .input(z.object({ authorId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const posts = await ctx.db.post.findMany({
+        where: {
+          authorId: input.authorId,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      });
+
+      return postsWithAuthor(posts);
+    }),
+
   getLatest: publicProcedure.query(async ({ ctx }) => {
     const posts = await ctx.db.post.findMany({
       orderBy: { createdAt: "desc" },
