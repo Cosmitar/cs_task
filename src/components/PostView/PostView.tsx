@@ -11,13 +11,12 @@ type PostAndUser = RouterOutputs["post"]["getById"][number];
 export default function PostView(props: PostAndUser) {
   const [voting, setVoting] = useState(false);
   const { post, author, valuation, myVote } = props;
-
+  
+  const ctx = api.useUtils();
   const votePost = api.post.vote.useMutation({
     onSuccess: () => {
       setVoting(false);
-      // router.refresh();
-      // setTitle("");
-      // setContent("");
+      void ctx.post.getLatest.invalidate();
     },
   });
 
