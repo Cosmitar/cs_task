@@ -8,9 +8,6 @@ import { api } from "~/utils/api";
 export default function CommentForm({ commentPath }: { commentPath: string }) {
   const [content, setContent] = useState("");
 
-  const auth = useUser();
-  if (!auth) return <></>;
-
   const ctx = api.useUtils();
   const createComment = api.comment.create.useMutation({
     onSuccess: () => {
@@ -19,13 +16,16 @@ export default function CommentForm({ commentPath }: { commentPath: string }) {
     },
   });
 
+  const auth = useUser();
+  if (!auth.isSignedIn) return <></>;
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         createComment.mutate({ content, commentPath });
       }}
-      className="comment-form my-7 flex w-full rounded-xl border border-gray-200 p-4 pb-3"
+      className="comment-form mb-7 flex w-full rounded-xl border border-gray-200 p-4 pb-3"
     >
       <div>
         <Image
@@ -36,6 +36,7 @@ export default function CommentForm({ commentPath }: { commentPath: string }) {
           height={24}
         />
       </div>
+
       <div className="flex w-full flex-col justify-start">
         <input
           type="text"
@@ -44,7 +45,9 @@ export default function CommentForm({ commentPath }: { commentPath: string }) {
           onChange={(e) => setContent(e.target.value)}
           className="w-full px-0 py-0 text-black outline-none "
         />
+
         <div className="mb-4 w-full border-b border-gray-200 pt-4" />
+
         <div className="flex justify-end">
           <button
             type="submit"
