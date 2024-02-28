@@ -31,7 +31,7 @@ const CrudShowcase = () => {
   return (
     <>
       <PostForm />
-      <div className="w-full max-w-xs">
+      <div className="w-full  [&>*:first-child]:mt-0">
         {data?.map((postAndAuthor) => (
           <PostView key={postAndAuthor.post.id} {...postAndAuthor} />
         ))}
