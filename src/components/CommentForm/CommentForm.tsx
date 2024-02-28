@@ -25,7 +25,7 @@ export default function CommentForm({ commentPath }: { commentPath: string }) {
         e.preventDefault();
         createComment.mutate({ content, commentPath });
       }}
-      className="comment-form mb-7 flex w-full rounded-xl border border-gray-200 p-4 pb-3"
+      className="comment-form mb-7 mt-4 flex w-full rounded-xl border border-gray-200 p-4 pb-3"
     >
       <div>
         <Image
