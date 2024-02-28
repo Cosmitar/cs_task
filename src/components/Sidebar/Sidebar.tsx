@@ -27,6 +27,7 @@ const SideBarItem = ({
           className={`group flex items-center rounded-lg p-3 pl-4 pr-4 hover:bg-gray-50 ${highlighted && "text-highlighted"}`}
         >
           {icon}
+
           <span className="mb-1 ms-3">{text}</span>
         </div>
       </Link>
@@ -56,6 +57,7 @@ export default function Sidebar() {
           {!auth.isSignedIn && (
             <SideBarItem text="Sign In" link="/sign-up" icon={<SignInIcon />} />
           )}
+
           {auth.isSignedIn && (
             <SideBarItem
               text="My Posts"
@@ -64,18 +66,22 @@ export default function Sidebar() {
               icon={<MessageBubbleIcon />}
             />
           )}
-          <li className="fixed bottom-8 left-6 flex">
-            <Image
-              src={auth?.user?.imageUrl ?? ""}
-              className="h-6 w-6 rounded-full"
-              alt={`${auth?.user?.firstName}'s profile picture`}
-              width={24}
-              height={24}
-            />
-            <span className="ms-4 flex-1 whitespace-nowrap">
-              {auth?.user?.firstName} {auth?.user?.lastName}
-            </span>
-          </li>
+
+          {auth.isSignedIn && (
+            <li className="fixed bottom-8 left-6 flex">
+              <Image
+                src={auth?.user?.imageUrl ?? ""}
+                className="h-6 w-6 rounded-full"
+                alt={`${auth?.user?.firstName}'s profile picture`}
+                width={24}
+                height={24}
+              />
+
+              <span className="ms-4 flex-1 whitespace-nowrap">
+                {auth?.user?.firstName} {auth?.user?.lastName}
+              </span>
+            </li>
+          )}
         </ul>
       </div>
     </aside>

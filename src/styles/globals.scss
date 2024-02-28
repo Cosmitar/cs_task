@@ -34,7 +34,6 @@ h2 {
   @apply justify-start;
   @apply m-auto;
   width: 600px;
-  // background-color: #f00a;
 }
 
 .post-form {
@@ -55,8 +54,4 @@ h2 {
   @apply rounded-lg;
   @apply text-white;
   @apply text-sm;
-}
-
-.post-row:first-child {
-  margin-top: 0;
 }

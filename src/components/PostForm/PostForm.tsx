@@ -11,9 +11,6 @@ export function PostForm() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  const auth = useUser();
-  if (!auth) return <></>;
-
   const createPost = api.post.create.useMutation({
     onSuccess: () => {
       router.refresh();
@@ -22,13 +19,16 @@ export function PostForm() {
     },
   });
 
+  const auth = useUser();
+  if (!auth.isSignedIn) return <></>;
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         createPost.mutate({ title, content });
       }}
-      className="post-form my-10 flex w-full rounded-xl border border-gray-200 p-4 pb-3"
+      className="post-form mt-10 flex w-full rounded-xl border border-gray-200 p-4 pb-3"
     >
       <div>
         <Image
@@ -39,6 +39,7 @@ export function PostForm() {
           height={24}
         />
       </div>
+
       <div className="w-full">
         <input
           type="text"
@@ -47,6 +48,7 @@ export function PostForm() {
           onChange={(e) => setTitle(e.target.value)}
           className="w-full px-0 py-0 text-black outline-none "
         />
+
         <input
           type="text"
           placeholder="Share your thoughts with the world!"
@@ -55,7 +57,9 @@ export function PostForm() {
           onChange={(e) => setContent(e.target.value)}
           className="w-full px-0 py-2 text-black outline-none"
         />
+
         <div className="w-full border-b border-gray-200" />
+
         <div className="mt-4 flex w-full items-center justify-end">
           <button
             type="submit"

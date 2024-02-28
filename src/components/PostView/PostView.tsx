@@ -6,6 +6,7 @@ import { useState } from "react";
 import { api, type RouterOutputs } from "~/utils/api";
 import UpvoteArrow from "../SVG/UpvoteArrow";
 import DownvoteArrow from "../SVG/DownvoteArrow";
+import { useUser } from "@clerk/nextjs";
 
 dayjs.extend(relativeTime);
 
@@ -22,14 +23,17 @@ export default function PostView(props: PostAndUser) {
     },
   });
 
+  const auth = useUser();
+  const canVote = auth.isSignedIn && !voting;
+
   return (
     <>
       <div className="post-row flex w-full">
         <div className="flex w-9 flex-col items-start justify-start">
-          <div className="flex flex-col items-center justify-start mt-1">
+          <div className="mt-1 flex flex-col items-center justify-start">
             <button
-              className={`${myVote > 0 && "text-indigo-500"} w-5`}
-              disabled={voting}
+              className={`${myVote > 0 && "text-indigo-500"} w-5 disabled:text-gray-400`}
+              disabled={!canVote}
               onClick={() => {
                 !myVote && votePost.mutate({ postId: post.id, valuation: 1 });
                 setVoting(true);
@@ -37,10 +41,12 @@ export default function PostView(props: PostAndUser) {
             >
               <UpvoteArrow />
             </button>
+
             <span className="my-3">{valuation}</span>
+
             <button
-              className={`${myVote < 0 && "text-indigo-500"} w-5`}
-              disabled={voting}
+              className={`${myVote < 0 && "text-indigo-500"} w-5 disabled:text-gray-400`}
+              disabled={!canVote}
               onClick={() => {
                 !myVote && votePost.mutate({ postId: post.id, valuation: -1 });
                 setVoting(true);
@@ -50,7 +56,8 @@ export default function PostView(props: PostAndUser) {
             </button>
           </div>
         </div>
-        <div className="flex flex-col w-full">
+
+        <div className="flex w-full flex-col">
           <Link href={`/posts/user/${author.id}`}>
             <div className="flex">
               <Image
@@ -60,6 +67,7 @@ export default function PostView(props: PostAndUser) {
                 width={24}
                 height={24}
               />
+
               <div className="flex items-center text-sm text-gray-600">
                 <span className="ml-2">Posted by {author.username}</span>
                 <span className="ml-1">{dayjs(post.createdAt).fromNow()}</span>
@@ -67,15 +75,14 @@ export default function PostView(props: PostAndUser) {
             </div>
           </Link>
 
-          <div className=" mt-1">
-            <Link href={`/posts/${post.id}`}>
+          <Link href={`/posts/${post.id}`}>
+            <div className=" mt-1">
               <p className="text-base font-medium">{post.title}</p>
               <span className="text-sm">{post.content}</span>
-            </Link>
-          </div>
+            </div>
+          </Link>
         </div>
       </div>
-      {/* <div className="flex h-1 w-full border-b " /> */}
     </>
   );
 }

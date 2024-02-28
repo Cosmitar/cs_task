@@ -21,18 +21,28 @@ const Post = () => {
       <Head>
         <title>CS - Post</title>
       </Head>
+
       <Sidebar />
+
       <main className="main-container pt-6">
         <Link href="/" className="flex h-10 w-full items-center justify-start">
           <BackArrow />
+
           <span className="ml-4 text-sm text-gray-800">Back to posts</span>
         </Link>
+
         {fullPostInfo && (
           <div key={fullPostInfo.post.id} className="my-7 w-full">
-            <PostView {...fullPostInfo} />
+            <div className="mb-7">
+              <PostView {...fullPostInfo} />
+            </div>
+
             <CommentForm commentPath={fullPostInfo.post.id} />
+
             <div className="w-full border-b border-gray-200" />
+
             <div className="my-7 w-full">All comments</div>
+
             <CommentsList commentPath={fullPostInfo.post.id} />
           </div>
         )}

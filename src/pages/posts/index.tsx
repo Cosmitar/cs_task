@@ -10,10 +10,14 @@ export default function Posts() {
     <>
       <Head>
         <title>CS</title>
+
         <meta name="description" content="CS Test Task" />
+
         <link rel="icon" href="/favicon.ico" />
       </Head>
+
       <Sidebar />
+
       <main className="main-container">
         <PostsList />
       </main>
@@ -27,7 +31,8 @@ const PostsList = () => {
   return (
     <>
       <PostForm />
-      <div className="w-full  [&>*:first-child]:mt-0 [&>*]:mt-10">
+
+      <div className="w-full [&>*]:mt-10">
         {data?.map((postAndAuthor) => (
           <PostView key={postAndAuthor.post.id} {...postAndAuthor} />
         ))}

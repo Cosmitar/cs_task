@@ -24,9 +24,6 @@ export const postRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // simulate a slow db call
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
-
       const authorId = ctx.userId;
 
       const { success } = await ratelimitPost.limit(authorId);
@@ -100,7 +97,7 @@ export const postRouter = createTRPCRouter({
         votes: true,
       },
       orderBy: { createdAt: "desc" },
-      take: 10,
+      take: 100,
     });
 
     return await postsWithAuthorAndVotes(posts, ctx.userId ?? "");
@@ -114,10 +111,7 @@ const postsWithAuthorAndVotes = async (
   const users = (
     await clerkClient.users.getUserList({
       userId: posts.reduce<string[]>(
-        (ids, p) =>
-          ids.includes(p.authorId)
-            ? ids
-            : [...ids, p.authorId],
+        (ids, p) => (ids.includes(p.authorId) ? ids : [...ids, p.authorId]),
         [],
       ),
     })
@@ -133,10 +127,10 @@ const postsWithAuthorAndVotes = async (
       });
 
     // final valuation across all the votes
+    // @TODO: this calculations should be DB queries
     let valuation = 0;
     let myVote = 0;
 
-    // @TODO: fix typescript not properly getting prisma types.
     post.votes.forEach((v: Vote) => {
       // save current user vote for later
       if (v.authorId === currentUserId && v.value) {
@@ -167,6 +161,7 @@ const ratelimitPost = new Ratelimit({
    */
   prefix: "@upstash/ratelimit",
 });
+
 // Create a new ratelimiter, that allows 1 request per second
 const ratelimitVote = new Ratelimit({
   redis: Redis.fromEnv(),

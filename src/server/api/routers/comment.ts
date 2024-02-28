@@ -24,9 +24,6 @@ export const commentRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // simulate a slow db call
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
-
       const authorId = ctx.userId;
 
       const { success } = await ratelimitComment.limit(authorId);
@@ -102,6 +99,7 @@ const commentsWithAuthorAndVotes = async (
       });
 
     // final valuation across all the votes
+    // @TODO: this calculations should be DB queries
     let valuation = 0;
     let myVote = 0;
 
@@ -135,6 +133,7 @@ const ratelimitComment = new Ratelimit({
    */
   prefix: "@upstash/ratelimit",
 });
+
 // Create a new ratelimiter, that allows 1 request per second
 const ratelimitVote = new Ratelimit({
   redis: Redis.fromEnv(),

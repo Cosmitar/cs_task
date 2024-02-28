@@ -14,7 +14,9 @@ const User = () => {
       <Head>
         <title>CS - User Posts</title>
       </Head>
+
       <Sidebar />
+
       <main className="main-container">
         {authorId && <PostsListByUser authorId={authorId} />}
       </main>
@@ -32,7 +34,8 @@ const PostsListByUser = ({ authorId }: { authorId: string }) => {
   return (
     <>
       <PostForm />
-      <div className="w-full  [&>*:first-child]:mt-0 [&>*]:mt-10">
+
+      <div className="w-full  [&>*]:mt-10">
         {data?.map((postAndAuthor) => (
           <PostView key={postAndAuthor.post.id} {...postAndAuthor} />
         ))}
