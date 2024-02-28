@@ -24,9 +24,9 @@ export default function PostView(props: PostAndUser) {
 
   return (
     <>
-      <div className="post-row my-10  flex w-full">
+      <div className="post-row flex w-full">
         <div className="flex w-9 flex-col items-start justify-start">
-          <div className="flex flex-col items-center justify-start">
+          <div className="flex flex-col items-center justify-start mt-1">
             <button
               className={`${myVote > 0 && "text-indigo-500"}`}
               // style={{ color: myVote > 0 ? "blue" : "inherit" }}
@@ -38,7 +38,7 @@ export default function PostView(props: PostAndUser) {
             >
               <UpvoteArrow />
             </button>
-            <span className="my-2">{valuation}</span>
+            <span className="my-3">{valuation}</span>
             <button
               className={`${myVote < 0 && "text-indigo-500"}`}
               // style={{ color: myVote < 0 ? "blue" : "inherit" }}
@@ -77,7 +77,7 @@ export default function PostView(props: PostAndUser) {
           </div>
         </div>
       </div>
-      <div className="flex h-1 w-full border-b " />
+      {/* <div className="flex h-1 w-full border-b " /> */}
     </>
   );
 }
