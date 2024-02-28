@@ -1,7 +1,6 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { Fragment } from "react";
 import CommentForm from "~/components/CommentForm/CommentForm";
 import CommentsList from "~/components/CommentsList/CommentsList";
 import PostView from "~/components/PostView/PostView";
@@ -12,7 +11,7 @@ import { api } from "~/utils/api";
 const Post = () => {
   const router = useRouter();
 
-  const { data, isLoading: postsLoading } = api.post.getById.useQuery({
+  const { data } = api.post.getById.useQuery({
     postId: router.query.id as string,
   });
   const fullPostInfo = data ? data[0] : null;
