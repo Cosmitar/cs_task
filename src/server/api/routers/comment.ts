@@ -72,6 +72,7 @@ export const commentRouter = createTRPCRouter({
             startsWith: input.commentPath,
           },
         },
+        orderBy: { createdAt: "desc" },
       });
 
       return await commentsWithAuthorAndVotes(comments, ctx.userId ?? "");
@@ -85,10 +86,7 @@ const commentsWithAuthorAndVotes = async (
   const users = (
     await clerkClient.users.getUserList({
       userId: comments.reduce<string[]>(
-        (ids, p) =>
-          ids.includes(p.authorId)
-            ? ids
-            : [...ids, p.authorId],
+        (ids, p) => (ids.includes(p.authorId) ? ids : [...ids, p.authorId]),
         [],
       ),
     })
