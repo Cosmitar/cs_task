@@ -22,13 +22,13 @@ export default function CommentFooter({ data }: { data: FullCommentData }) {
   });
 
   const auth = useUser();
-  const canVote = auth.isSignedIn && !voting;
+  const canVote = auth.isSignedIn && !voting && !myVote;
 
   return (
     <>
       <div className="flex w-full">
         <button
-          className={`${myVote > 0 && "text-indigo-500"} w-4 disabled:text-gray-400`}
+          className={`${myVote > 0 && "text-indigo-500"} w-4 ${!auth.isSignedIn && "text-gray-400"}`}
           disabled={!canVote}
           onClick={() => {
             !myVote &&
@@ -42,7 +42,7 @@ export default function CommentFooter({ data }: { data: FullCommentData }) {
         <span className="mx-3">{valuation}</span>
 
         <button
-          className={`${myVote < 0 && "text-indigo-500"} w-4 disabled:text-gray-400`}
+          className={`${myVote < 0 && "text-indigo-500"} w-4 ${!auth.isSignedIn && "text-gray-400"}`}
           disabled={!canVote}
           onClick={() => {
             !myVote &&

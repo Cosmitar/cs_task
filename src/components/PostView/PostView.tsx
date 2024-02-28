@@ -24,7 +24,7 @@ export default function PostView(props: PostAndUser) {
   });
 
   const auth = useUser();
-  const canVote = auth.isSignedIn && !voting;
+  const canVote = auth.isSignedIn && !voting && !myVote;
 
   return (
     <>
@@ -32,7 +32,7 @@ export default function PostView(props: PostAndUser) {
         <div className="flex w-9 flex-col items-start justify-start">
           <div className="mt-1 flex flex-col items-center justify-start">
             <button
-              className={`${myVote > 0 && "text-indigo-500"} w-5 disabled:text-gray-400`}
+              className={`${myVote > 0 && "text-indigo-500"} w-5 ${!auth.isSignedIn && "text-gray-400"}`}
               disabled={!canVote}
               onClick={() => {
                 !myVote && votePost.mutate({ postId: post.id, valuation: 1 });
@@ -45,7 +45,7 @@ export default function PostView(props: PostAndUser) {
             <span className="my-3">{valuation}</span>
 
             <button
-              className={`${myVote < 0 && "text-indigo-500"} w-5 disabled:text-gray-400`}
+              className={`${myVote < 0 && "text-indigo-500"} w-5 ${!auth.isSignedIn && "text-gray-400"}`}
               disabled={!canVote}
               onClick={() => {
                 !myVote && votePost.mutate({ postId: post.id, valuation: -1 });
