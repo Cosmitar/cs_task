@@ -2,18 +2,17 @@
 
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "~/utils/api";
 
 export function PostForm() {
-  const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
+  const ctx = api.useUtils();
   const createPost = api.post.create.useMutation({
     onSuccess: () => {
-      router.refresh();
+      void ctx.post.getLatest.invalidate();
       setTitle("");
       setContent("");
     },
