@@ -1,5 +1,5 @@
 import CommentFooter from "./CommentFooter";
-import CommentHeader from "./commentHeader";
+import CommentHeader from "./CommentHeader";
 import type { FullCommentData } from "./types";
 
 export default function Comment({
