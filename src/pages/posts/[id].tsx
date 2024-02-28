@@ -1,9 +1,12 @@
 import Head from "next/head";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { Fragment } from "react";
 import CommentForm from "~/components/CommentForm/CommentForm";
 import CommentsList from "~/components/CommentsList/CommentsList";
 import PostView from "~/components/PostView/PostView";
+import BackArrow from "~/components/SVG/BackArrow";
+import Sidebar from "~/components/Sidebar/Sidebar";
 import { api } from "~/utils/api";
 
 const Post = () => {
@@ -19,17 +22,21 @@ const Post = () => {
       <Head>
         <title>CS - Post</title>
       </Head>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c]">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
-          POST BY ID: {router.query.id}
-          {fullPostInfo && (
-            <Fragment key={fullPostInfo.post.id}>
-              <PostView {...fullPostInfo} />
-              <CommentForm commentPath={fullPostInfo.post.id} />
-              <CommentsList commentPath={fullPostInfo.post.id} />
-            </Fragment>
-          )}
-        </div>
+      <Sidebar />
+      <main className="main-container pt-6">
+        <Link href="/" className="flex h-10 w-full items-center justify-start">
+          <BackArrow />
+          <span className="ml-4 text-sm text-gray-800">Back to posts</span>
+        </Link>
+        {fullPostInfo && (
+          <div key={fullPostInfo.post.id} className="my-7 w-full">
+            <PostView {...fullPostInfo} />
+            <CommentForm commentPath={fullPostInfo.post.id} />
+            <div className="w-full border-b border-gray-200" />
+            <div className="my-7 w-full">All comments</div>
+            <CommentsList commentPath={fullPostInfo.post.id} />
+          </div>
+        )}
       </main>
     </>
   );

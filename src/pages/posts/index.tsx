@@ -16,9 +16,6 @@ export default function Posts() {
       </Head>
       <Sidebar />
       <main className="main-container">
-        {/* <div className="h-10 flex items-center justify-start w-full">
-          <BackArrow />
-        </div> */}
         <CrudShowcase />
       </main>
     </>
@@ -31,7 +28,7 @@ const CrudShowcase = () => {
   return (
     <>
       <PostForm />
-      <div className="w-full  [&>*:first-child]:mt-0">
+      <div className="w-full  [&>*:first-child]:mt-0 [&>*]:mt-10">
         {data?.map((postAndAuthor) => (
           <PostView key={postAndAuthor.post.id} {...postAndAuthor} />
         ))}
