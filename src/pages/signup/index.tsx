@@ -1,6 +1,6 @@
 import { SignInButton } from "@clerk/nextjs";
 import Head from "next/head";
-import GoogleSSOButton from "~/components/SVG/GoogleSSoButton";
+import GoogleSSOButton from "~/components/SVG/GoogleSSOButton";
 
 export default function SignUp() {
   return (
