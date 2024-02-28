@@ -25,3 +25,29 @@ h2 {
   @apply text-xl;
   @apply text-base;
 }
+
+.main-container {
+  @apply flex;
+  @apply min-h-screen;
+  @apply flex-col;
+  @apply items-center;
+  @apply justify-start;
+  @apply m-auto;
+  width: 600px;
+  // background-color: #f00a;
+}
+
+.post-form {
+  min-height: 150px;
+  background-color: white;
+  filter: drop-shadow(0 20px 13px rgb(0 0 0 / 0.03)) drop-shadow(0 8px 5px rgb(0 0 0 / 0.04));
+}
+
+.primary-button {
+  @apply bg-indigo-600;
+  @apply py-2;
+  @apply px-3;
+  @apply rounded-lg;
+  @apply text-white;
+  @apply text-sm;
+}
