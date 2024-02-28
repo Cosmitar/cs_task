@@ -1,7 +1,6 @@
 import Head from "next/head";
 import { PostForm } from "~/components/PostForm/PostForm";
 import PostView from "~/components/PostView/PostView";
-import BackArrow from "~/components/SVG/BackArrow";
 import Sidebar from "~/components/Sidebar/Sidebar";
 
 import { api } from "~/utils/api";
@@ -16,14 +15,14 @@ export default function Posts() {
       </Head>
       <Sidebar />
       <main className="main-container">
-        <CrudShowcase />
+        <PostsList />
       </main>
     </>
   );
 }
 
-const CrudShowcase = () => {
-  const { data, isLoading: postsLoading } = api.post.getLatest.useQuery();
+const PostsList = () => {
+  const { data } = api.post.getLatest.useQuery();
 
   return (
     <>
