@@ -25,7 +25,7 @@ export default function SignUp() {
             Already have an account?
       
             <span className="m-1 font-medium text-indigo-950">
-              <SignInButton />
+              <SignInButton afterSignInUrl="/" afterSignUpUrl="/" redirectUrl="/" />
             </span>
           </div>
         </div>
