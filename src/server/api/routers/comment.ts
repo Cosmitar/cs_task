@@ -70,6 +70,7 @@ export const commentRouter = createTRPCRouter({
           },
         },
         orderBy: { createdAt: "desc" },
+        take: 100,
       });
 
       return await commentsWithAuthorAndVotes(comments, ctx.userId ?? "");
