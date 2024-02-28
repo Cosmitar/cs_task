@@ -51,3 +51,7 @@ h2 {
   @apply text-white;
   @apply text-sm;
 }
+
+.post-row:first-child {
+  margin-top: 0;
+}
