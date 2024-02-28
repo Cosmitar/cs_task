@@ -28,8 +28,7 @@ export default function PostView(props: PostAndUser) {
         <div className="flex w-9 flex-col items-start justify-start">
           <div className="flex flex-col items-center justify-start mt-1">
             <button
-              className={`${myVote > 0 && "text-indigo-500"}`}
-              // style={{ color: myVote > 0 ? "blue" : "inherit" }}
+              className={`${myVote > 0 && "text-indigo-500"} w-5`}
               disabled={voting}
               onClick={() => {
                 !myVote && votePost.mutate({ postId: post.id, valuation: 1 });
@@ -40,8 +39,7 @@ export default function PostView(props: PostAndUser) {
             </button>
             <span className="my-3">{valuation}</span>
             <button
-              className={`${myVote < 0 && "text-indigo-500"}`}
-              // style={{ color: myVote < 0 ? "blue" : "inherit" }}
+              className={`${myVote < 0 && "text-indigo-500"} w-5`}
               disabled={voting}
               onClick={() => {
                 !myVote && votePost.mutate({ postId: post.id, valuation: -1 });

@@ -4,6 +4,10 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Fragment, useState } from "react";
 import CommentForm from "../CommentForm/CommentForm";
+import Link from "next/link";
+import UpvoteArrow from "../SVG/UpvoteArrow";
+import DownvoteArrow from "../SVG/DownvoteArrow";
+import CommentBubbleIcon from "../SVG/CommentBubbleIcon";
 
 dayjs.extend(relativeTime);
 
@@ -34,7 +38,7 @@ export default function CommentsList({ commentPath }: { commentPath: string }) {
     }, {}) ?? {};
 
   return (
-    <div>
+    <div className="flex w-full flex-col">
       {Object.keys(grouppedComments).map((path) => {
         const comments = grouppedComments[path];
         const depth = parseDepth(path);
@@ -44,9 +48,7 @@ export default function CommentsList({ commentPath }: { commentPath: string }) {
             data={comments ?? []}
             hierarchyData={grouppedComments}
           />
-        ) : (
-          null
-        );
+        ) : null;
       })}
     </div>
   );
@@ -59,35 +61,39 @@ const Comments = ({
   data: FullCommentData[];
   hierarchyData: Record<string, FullCommentData[]>;
 }) => {
-  return data.map((fullCommentData) => (
-    <Fragment key={fullCommentData.comment.id}>
-      <Comment
-        data={fullCommentData}
-        depth={parseDepth(fullCommentData.comment?.commentPath ?? "")}
-      />
-      {hierarchyData[
-        fullCommentData.comment.commentPath +
-          COMMENT_PATH_SEPARATOR +
-          fullCommentData.comment.id
-      ] && (
-        <Comments
-          data={
-            hierarchyData[
-              fullCommentData.comment.commentPath +
-                COMMENT_PATH_SEPARATOR +
-                fullCommentData.comment.id
-            ] ?? []
-          }
-          hierarchyData={hierarchyData}
-        />
-      )}
-    </Fragment>
-  ));
+  return data.map((fullCommentData) => {
+    const depth = parseDepth(fullCommentData.comment?.commentPath ?? "");
+    return (
+      <div
+        key={fullCommentData.comment.id}
+        className={`flex w-full flex-col ${depth === 1 && " border-b pb-6"}`}
+      >
+        <Comment data={fullCommentData} depth={depth} />
+        {hierarchyData[
+          fullCommentData.comment.commentPath +
+            COMMENT_PATH_SEPARATOR +
+            fullCommentData.comment.id
+        ] && (
+          <Comments
+            data={
+              hierarchyData[
+                fullCommentData.comment.commentPath +
+                  COMMENT_PATH_SEPARATOR +
+                  fullCommentData.comment.id
+              ] ?? []
+            }
+            hierarchyData={hierarchyData}
+          />
+        )}
+      </div>
+    );
+  });
 };
 
 const Comment = ({ data, depth }: { data: FullCommentData; depth: number }) => {
   const [voting, setVoting] = useState(false);
-  const { comment, valuation, myVote } = data;
+  const { comment, author, valuation, myVote } = data;
+  const [showForm, setShowForm] = useState(false);
 
   const ctx = api.useUtils();
   const voteComment = api.comment.vote.useMutation({
@@ -98,58 +104,78 @@ const Comment = ({ data, depth }: { data: FullCommentData; depth: number }) => {
   });
 
   return (
-    <div style={{ marginLeft: depth * 20 }}>
-      <div className="flex">
-        <Image
-          src={data.author.imageUrl}
-          className="h-6 w-6 rounded-full"
-          alt={`${data.author.username}'s profile picture`}
-          width={24}
-          height={24}
-        />
-        <span className="">Posted by {data.author.username}</span>
-        <span className="">{dayjs(data.comment.createdAt).fromNow()}</span>
-      </div>
-      <div>
-        <button
-          style={{ color: myVote > 0 ? "blue" : "inherit" }}
-          disabled={voting}
-          onClick={() => {
-            !myVote &&
-              voteComment.mutate({ commentId: comment.id, valuation: 1 });
-            setVoting(true);
-          }}
-        >
-          ⥣
-        </button>
-        {valuation}
-        <button
-          style={{ color: myVote < 0 ? "blue" : "inherit" }}
-          disabled={voting}
-          onClick={() => {
-            !myVote &&
-              voteComment.mutate({ commentId: comment.id, valuation: -1 });
-            setVoting(true);
-          }}
-        >
-          ⥥
-        </button>
+    <>
+      <div
+        style={{ marginLeft: (depth - 1) * 32 }}
+        className="mt-6 flex flex-col"
+      >
+        <div className="flex w-full flex-col">
+          <Link href={`/posts/user/${author.id}`}>
+            <div className="flex">
+              <Image
+                src={data.author.imageUrl}
+                className="h-6 w-6 rounded-full"
+                alt={`${data.author.username}'s profile picture`}
+                width={24}
+                height={24}
+              />
+              <div className="flex items-center text-sm text-gray-600">
+                <span className="ml-2">Posted by {data.author.username}</span>
+                <span className="ml-1">
+                  {dayjs(data.comment.createdAt).fromNow()}
+                </span>
+              </div>
+            </div>
+          </Link>
+        </div>
+        <span className="my-3 text-sm">{data.comment.content}</span>
+        <div className="flex w-full">
+          <button
+            className={`${myVote > 0 && "text-indigo-500"} w-4`}
+            disabled={voting}
+            onClick={() => {
+              !myVote &&
+                voteComment.mutate({ commentId: comment.id, valuation: 1 });
+              setVoting(true);
+            }}
+          >
+            <UpvoteArrow />
+          </button>
+          <span className="mx-3">{valuation}</span>
+          <button
+            className={`${myVote < 0 && "text-indigo-500"} w-4`}
+            disabled={voting}
+            onClick={() => {
+              !myVote &&
+                voteComment.mutate({ commentId: comment.id, valuation: -1 });
+              setVoting(true);
+            }}
+          >
+            <DownvoteArrow />
+          </button>
+          <button
+            className={`mx-4 flex w-full items-center ${showForm ? "text-indigo-600" : "text-gray-700"} `}
+            onClick={() => setShowForm((v) => !v)}
+          >
+            <CommentBubbleIcon />
+            <span className="mx-2 text-sm">Reply</span>
+          </button>
+        </div>
         <ToggleCommentForm
+          visible={showForm}
           path={`${comment.commentPath}${COMMENT_PATH_SEPARATOR}${comment.id}`}
         />
       </div>
-      <span className="">{data.comment.content}</span>
-    </div>
+    </>
   );
 };
 
-const ToggleCommentForm = ({ path }: { path: string }) => {
-  const [visible, setVisible] = useState(false);
-
-  return (
-    <div>
-      <button onClick={() => setVisible((v) => !v)}>Reply</button>
-      {visible && <CommentForm commentPath={path} />}
-    </div>
-  );
+const ToggleCommentForm = ({
+  path,
+  visible,
+}: {
+  path: string;
+  visible: boolean;
+}) => {
+  return <div>{visible && <CommentForm commentPath={path} />}</div>;
 };
