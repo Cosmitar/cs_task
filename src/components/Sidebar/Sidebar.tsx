@@ -55,7 +55,7 @@ export default function Sidebar() {
           />
 
           {!auth.isSignedIn && (
-            <SideBarItem text="Sign In" link="/sign-up" icon={<SignInIcon />} />
+            <SideBarItem text="Sign In" link="/signup" icon={<SignInIcon />} />
           )}
 
           {auth.isSignedIn && (
