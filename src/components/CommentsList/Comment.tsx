@@ -9,9 +9,14 @@ export default function Comment({
   data: FullCommentData;
   depth: number;
 }) {
+  const indentWidth = 32;
+  const maxIndent = 10 * indentWidth; // max 10 indents
+
   return (
     <div
-      style={{ marginLeft: (depth - 1) * 32 }}
+      style={{
+        marginLeft: Math.min((depth - 1) * indentWidth, maxIndent),
+      }}
       className="mt-6 flex flex-col"
     >
       <CommentHeader data={data} />
