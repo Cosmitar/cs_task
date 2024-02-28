@@ -14,4 +14,4 @@ live version: [https://cs-task-psi.vercel.app](cs-task-psi.vercel.app)
 Currently there's only one instance of the DB, the same for live version in Vercel.
 
 ## Deployment
-- CI setup for deploying into Vercel everything pushed to main.
+- CI setup for deploying on Vercel everything pushed to main.
