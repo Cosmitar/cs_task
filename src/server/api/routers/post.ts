@@ -75,7 +75,7 @@ export const postRouter = createTRPCRouter({
     }),
 
   getByUser: publicProcedure
-    .input(z.object({ authorId: z.string() }))
+    .input(z.object({ authorId: z.string().optional() }))
     .query(async ({ ctx, input }) => {
       const posts = await ctx.db.post.findMany({
         include: {
@@ -85,7 +85,7 @@ export const postRouter = createTRPCRouter({
           authorId: input.authorId,
         },
         orderBy: { createdAt: "desc" },
-        take: 10,
+        take: 100,
       });
 
       return await postsWithAuthorAndVotes(posts, ctx.userId ?? "");
