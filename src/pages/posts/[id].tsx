@@ -1,6 +1,5 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import CommentForm from "~/components/CommentForm/CommentForm";
 import CommentsList from "~/components/CommentsList/CommentsList";
 import PostView from "~/components/PostView/PostView";
@@ -8,12 +7,15 @@ import BackArrow from "~/components/SVG/BackArrow";
 import Sidebar from "~/components/Sidebar/Sidebar";
 import { api } from "~/utils/api";
 
-const Post = () => {
-  const router = useRouter();
+const Post = (
+  props: InferGetServerSidePropsType<typeof getServerSideProps>,
+) => {
+  const { id } = props;
 
   const { data } = api.post.getById.useQuery({
-    postId: router.query.id as string,
+    postId: id,
   });
+
   const fullPostInfo = data ? data[0] : null;
 
   return (
@@ -52,3 +54,35 @@ const Post = () => {
 };
 
 export default Post;
+
+import { createServerSideHelpers } from "@trpc/react-query/server";
+import type {
+  GetServerSidePropsContext,
+  InferGetServerSidePropsType,
+} from "next";
+import superjson from "superjson";
+import { appRouter } from "~/server/api/root";
+import { db } from "~/server/db";
+
+export async function getServerSideProps(
+  context: GetServerSidePropsContext<{ id: string }>,
+) {
+  const helpers = createServerSideHelpers({
+    router: appRouter,
+    ctx: {db, userId: null},
+    transformer: superjson,
+  });
+  const id = context.params?.id;
+  /*
+   * Prefetching the `post.getById` query.
+   * `prefetch` does not return the result and never throws - if you need that behavior, use `fetch` instead.
+   */
+  await helpers.post.getById.prefetch({ postId: id });
+  // Make sure to return { props: { trpcState: helpers.dehydrate() } }
+  return {
+    props: {
+      trpcState: helpers.dehydrate(),
+      id,
+    },
+  };
+}
