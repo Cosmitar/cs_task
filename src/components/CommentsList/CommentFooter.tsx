@@ -63,9 +63,17 @@ export default function CommentFooter({ data }: { data: FullCommentData }) {
           <span className="mx-2 text-sm">Reply</span>
         </button>
       </div>
-      {showForm && (
-        <CommentForm commentPath={buildPath(comment.commentPath, comment.id)} />
-      )}
+      <div
+        className={`transition-all	duration-300 ${showForm ? "min-h-40 delay-0" : "collapse min-h-0 delay-300"} h-0`}
+      >
+        <div
+          className={`transition-all	duration-300 ${showForm ? "delay-300 opacity-1" : "delay-0 opacity-0"} h-0`}
+        >
+          <CommentForm
+            commentPath={buildPath(comment.commentPath, comment.id)}
+          />
+        </div>
+      </div>
     </>
   );
 }

@@ -2,11 +2,16 @@ import { api } from "~/utils/api";
 import type { FullCommentData } from "./types";
 import { buildPath, parseDepth } from "./helpers";
 import Comment from "./Comment";
+import FeedSkeleton from "../SVG/FeedSkeleton";
 
 export default function CommentsList({ commentPath }: { commentPath: string }) {
-  const { data } = api.comment.getByPath.useQuery({
+  const { data, isLoading } = api.comment.getByPath.useQuery({
     commentPath,
   });
+
+  if(isLoading) {
+    return <FeedSkeleton />
+  }
 
   // loops into results and groups comments by path
   const grouppedComments =
@@ -25,7 +30,7 @@ export default function CommentsList({ commentPath }: { commentPath: string }) {
   // iterates on grouped comments taking only those from the shallow (depth === 1).
   // nested comments are rendered in a recursive call from <Comments /> component.
   return (
-    <div className="flex w-full flex-col">
+    <div className="flex w-full flex-col animate-fade">
       {Object.keys(grouppedComments).map((path) => {
         const comments = grouppedComments[path];
 
