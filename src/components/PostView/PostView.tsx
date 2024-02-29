@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, type RouterOutputs } from "~/utils/api";
 import UpvoteArrow from "../SVG/UpvoteArrow";
 import DownvoteArrow from "../SVG/DownvoteArrow";
@@ -13,6 +13,9 @@ dayjs.extend(relativeTime);
 type PostAndUser = RouterOutputs["post"]["getById"][number];
 export default function PostView(props: PostAndUser) {
   const [voting, setVoting] = useState(false);
+  const [votesCount, setVotesCount] = useState(0);
+  const [myValuation, setMyValuation] = useState(0);
+
   const { post, author } = props;
 
   const ctx = api.useUtils();
@@ -20,6 +23,8 @@ export default function PostView(props: PostAndUser) {
     onSuccess: () => {
       setVoting(false);
       void ctx.post.getLatest.invalidate();
+      void ctx.post.getById.invalidate();
+      void ctx.post.getByUser.invalidate();
     },
   });
 
@@ -29,31 +34,39 @@ export default function PostView(props: PostAndUser) {
   const valuation = Number(post.valuation);
   const myVote = post.myVote ?? 0;
 
+  useEffect(() => {
+    setVotesCount(valuation);
+    setMyValuation(myVote);
+  }, [valuation, myVote]);
+
+  const castVote = (valuation: number) => {
+    setVoting(true);
+    !myValuation && votePost.mutate({ postId: post.id, valuation });
+    // optimistic approach
+    setVotesCount((v) => v + valuation);
+    setMyValuation(valuation)
+
+  };
+
   return (
     <>
       <div className="post-row animate-fade flex w-full">
         <div className="flex w-9 flex-col items-start justify-start">
           <div className="mt-1 flex flex-col items-center justify-start">
             <button
-              className={`${myVote > 0 && "text-indigo-500"} w-5 ${!auth.isSignedIn && "text-gray-400"}`}
+              className={`${myValuation > 0 && "text-indigo-500"} w-5 ${!auth.isSignedIn && "text-gray-400"}`}
               disabled={!canVote}
-              onClick={() => {
-                !myVote && votePost.mutate({ postId: post.id, valuation: 1 });
-                setVoting(true);
-              }}
+              onClick={() => castVote(1)}
             >
               <UpvoteArrow />
             </button>
 
-            <span className="my-3">{valuation}</span>
+            <span className="my-3">{votesCount}</span>
 
             <button
-              className={`${myVote < 0 && "text-indigo-500"} w-5 ${!auth.isSignedIn && "text-gray-400"}`}
+              className={`${myValuation < 0 && "text-indigo-500"} w-5 ${!auth.isSignedIn && "text-gray-400"}`}
               disabled={!canVote}
-              onClick={() => {
-                !myVote && votePost.mutate({ postId: post.id, valuation: -1 });
-                setVoting(true);
-              }}
+              onClick={() => castVote(-1)}
             >
               <DownvoteArrow />
             </button>

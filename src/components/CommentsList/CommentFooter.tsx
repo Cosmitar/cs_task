@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FullCommentData } from "./types";
 import { api } from "~/utils/api";
 import { useUser } from "@clerk/nextjs";
@@ -10,6 +10,8 @@ import { buildPath } from "./helpers";
 
 export default function CommentFooter({ data }: { data: FullCommentData }) {
   const [voting, setVoting] = useState(false);
+  const [votesCount, setVotesCount] = useState(0);
+  const [myValuation, setMyValuation] = useState(0);
   const { comment } = data;
   const [showForm, setShowForm] = useState(false);
 
@@ -24,34 +26,40 @@ export default function CommentFooter({ data }: { data: FullCommentData }) {
   const auth = useUser();
   const canVote = auth.isSignedIn && !voting && !comment.myVote;
 
-  const myVote = comment.myVote ?? 0
+  const myVote = comment.myVote ?? 0;
   const valuation = Number(comment.valuation);
+
+  useEffect(() => {
+    setVotesCount(valuation);
+    setMyValuation(myVote);
+  }, [valuation, myVote]);
+
+  const castVote = (valuation: number) => {
+    setVoting(true);
+    !myValuation && voteComment.mutate({ commentId: comment.id, valuation });
+
+    // optimistic approach
+    setVotesCount((v) => v + valuation);
+    setMyValuation(valuation);
+  };
 
   return (
     <>
       <div className="flex w-full">
         <button
-          className={`${myVote > 0 && "text-indigo-500"} w-4 ${!auth.isSignedIn && "text-gray-400"}`}
+          className={`${myValuation > 0 && "text-indigo-500"} w-4 ${!auth.isSignedIn && "text-gray-400"}`}
           disabled={!canVote}
-          onClick={() => {
-            !myVote &&
-              voteComment.mutate({ commentId: comment.id, valuation: 1 });
-            setVoting(true);
-          }}
+          onClick={() => castVote(1)}
         >
           <UpvoteArrow />
         </button>
 
-        <span className="mx-3">{valuation}</span>
+        <span className="mx-3">{votesCount}</span>
 
         <button
-          className={`${myVote < 0 && "text-indigo-500"} w-4 ${!auth.isSignedIn && "text-gray-400"}`}
+          className={`${myValuation < 0 && "text-indigo-500"} w-4 ${!auth.isSignedIn && "text-gray-400"}`}
           disabled={!canVote}
-          onClick={() => {
-            !myVote &&
-              voteComment.mutate({ commentId: comment.id, valuation: -1 });
-            setVoting(true);
-          }}
+          onClick={() => castVote(-1)}
         >
           <DownvoteArrow />
         </button>
@@ -70,7 +78,7 @@ export default function CommentFooter({ data }: { data: FullCommentData }) {
         className={`transition-all	duration-300 ${showForm ? "min-h-40 delay-0" : "collapse min-h-0 delay-300"} h-0`}
       >
         <div
-          className={`transition-all	duration-300 ${showForm ? "delay-300 opacity-1" : "delay-0 opacity-0"} h-0`}
+          className={`transition-all	duration-300 ${showForm ? "opacity-1 delay-300" : "opacity-0 delay-0"} h-0`}
         >
           <CommentForm
             commentPath={buildPath(comment.commentPath, comment.id)}
