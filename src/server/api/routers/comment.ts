@@ -1,5 +1,5 @@
 import { clerkClient } from "@clerk/nextjs";
-import type { Comment, Prisma, Vote } from "@prisma/client";
+import type { Comment } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -13,7 +13,10 @@ import { Ratelimit } from "@upstash/ratelimit"; // for deno: see above
 import { Redis } from "@upstash/redis"; // see below for cloudflare and fastly adapters
 import { filterUserForClient } from "~/utils/helpers";
 
-type CommentWithVotes = Prisma.CommentGetPayload<{ include: { votes: true } }>;
+type CommentWithVotesInfo = Comment & {
+  valuation: number | null;
+  myVote: number | null;
+};
 
 export const commentRouter = createTRPCRouter({
   create: privateProcedure
@@ -60,27 +63,30 @@ export const commentRouter = createTRPCRouter({
   getByPath: publicProcedure
     .input(z.object({ commentPath: z.string() }))
     .query(async ({ ctx, input }) => {
-      const comments = await ctx.db.comment.findMany({
-        include: {
-          votes: true,
-        },
-        where: {
-          commentPath: {
-            startsWith: input.commentPath,
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 100,
-      });
+      const PATH_LIKE = `${input.commentPath}%`
+      const res = await ctx.db.$queryRaw<CommentWithVotesInfo[]>`
+        SELECT
+            c.*, CAST(SUM(v.value) AS SIGNED INTEGER) as valuation,
+            (SELECT
+              v2.value
+            FROM Vote as v2
+            WHERE
+              v2.commentId = c.id
+              AND v2.authorId = ${ctx.userId}
+            LIMIT 1) as myVote
+          FROM Comment as c
+          LEFT JOIN Vote as v ON v.commentId = c.id
+          
+          WHERE c.commentPath LIKE ${PATH_LIKE}
+          GROUP BY c.id
+          ORDER BY c.createdAt DESC
+          LIMIT 100`;
 
-      return await commentsWithAuthorAndVotes(comments, ctx.userId ?? "");
+      return await commentsWithAuthor(res);
     }),
 });
 
-const commentsWithAuthorAndVotes = async (
-  comments: CommentWithVotes[],
-  currentUserId: string,
-) => {
+const commentsWithAuthor = async (comments: CommentWithVotesInfo[]) => {
   const users = (
     await clerkClient.users.getUserList({
       userId: comments.reduce<string[]>(
@@ -99,25 +105,9 @@ const commentsWithAuthorAndVotes = async (
         message: "Comment author not found",
       });
 
-    // final valuation across all the votes
-    // @TODO: this calculations should be DB queries
-    let valuation = 0;
-    let myVote = 0;
-
-    comment.votes.forEach((v: Vote) => {
-      // save current user vote for later
-      if (v.authorId === currentUserId && v.value) {
-        myVote = v.value;
-      }
-      // cumulate value
-      valuation += v.value;
-    });
-
     return {
       comment,
       author,
-      valuation,
-      myVote,
     };
   });
 };
