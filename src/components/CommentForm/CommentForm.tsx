@@ -17,7 +17,6 @@ export default function CommentForm({ commentPath }: { commentPath: string }) {
   });
 
   const auth = useUser();
-  if (!auth.isSignedIn) return <></>;
 
   return (
     <form
@@ -25,37 +24,41 @@ export default function CommentForm({ commentPath }: { commentPath: string }) {
         e.preventDefault();
         createComment.mutate({ content, commentPath });
       }}
-      className="comment-form mb-7 mt-4 flex w-full rounded-xl border border-gray-200 p-4 pb-3"
+      className={`comment-form mb-7 mt-4 flex w-full rounded-xl border border-gray-200 p-4 pb-3 transition-all	duration-500 ${auth.isSignedIn ? "min-h-32" : "collapse mb-0 mt-0 min-h-0 border-0 p-0 pb-0"} h-0`}
     >
-      <div>
-        <Image
-          src={auth?.user?.imageUrl ?? ""}
-          className="mr-4 h-6 w-6 rounded-full"
-          alt={`${auth?.user?.firstName}'s profile picture`}
-          width={24}
-          height={24}
-        />
-      </div>
+      <div
+        className={`flex w-full transition-all	delay-500 duration-500 ${auth.isSignedIn ? "opacity-1" : "opacity-0"}`}
+      >
+        <div>
+          <Image
+            src={auth?.user?.imageUrl ?? ""}
+            className="mr-4 h-6 w-6 rounded-full"
+            alt={`${auth?.user?.firstName}'s profile picture`}
+            width={24}
+            height={24}
+          />
+        </div>
 
-      <div className="flex w-full flex-col justify-start">
-        <input
-          type="text"
-          placeholder="Comment your thoughts"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="w-full px-0 py-0 text-black outline-none "
-        />
+        <div className="flex w-full flex-col justify-start">
+          <input
+            type="text"
+            placeholder="Comment your thoughts"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="w-full px-0 py-0 text-black outline-none "
+          />
 
-        <div className="mb-4 w-full border-b border-gray-200 pt-4" />
+          <div className="mb-4 w-full border-b border-gray-200 pt-4" />
 
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="primary-button font-semibold transition hover:bg-indigo-500"
-            disabled={createComment.isLoading}
-          >
-            {createComment.isLoading ? "Commenting..." : "Comment"}
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="primary-button font-semibold transition hover:bg-indigo-500"
+              disabled={createComment.isLoading}
+            >
+              {createComment.isLoading ? "Commenting..." : "Comment"}
+            </button>
+          </div>
         </div>
       </div>
     </form>

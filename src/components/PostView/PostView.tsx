@@ -28,7 +28,7 @@ export default function PostView(props: PostAndUser) {
 
   return (
     <>
-      <div className="post-row flex w-full">
+      <div className="post-row animate-fade flex w-full">
         <div className="flex w-9 flex-col items-start justify-start">
           <div className="mt-1 flex flex-col items-center justify-start">
             <button

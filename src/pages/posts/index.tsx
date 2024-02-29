@@ -1,6 +1,7 @@
 import Head from "next/head";
 import { PostForm } from "~/components/PostForm/PostForm";
 import PostView from "~/components/PostView/PostView";
+import FeedSkeleton from "~/components/SVG/FeedSkeleton";
 import Sidebar from "~/components/Sidebar/Sidebar";
 
 import { api } from "~/utils/api";
@@ -26,13 +27,14 @@ export default function Posts() {
 }
 
 const PostsList = () => {
-  const { data } = api.post.getLatest.useQuery();
+  const { data, isLoading } = api.post.getLatest.useQuery();
 
   return (
     <>
       <PostForm />
 
-      <div className="w-full [&>*]:mt-10">
+      <div className="animate-fade w-full [&>*]:mt-10">
+        {isLoading && <FeedSkeleton />}
         {data?.map((postAndAuthor) => (
           <PostView key={postAndAuthor.post.id} {...postAndAuthor} />
         ))}
