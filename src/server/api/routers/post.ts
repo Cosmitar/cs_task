@@ -1,5 +1,5 @@
 import { clerkClient } from "@clerk/nextjs";
-import type { Post, Vote, Prisma } from "@prisma/client";
+import type { Post } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -13,7 +13,10 @@ import { Ratelimit } from "@upstash/ratelimit"; // for deno: see above
 import { Redis } from "@upstash/redis"; // see below for cloudflare and fastly adapters
 import { filterUserForClient } from "~/utils/helpers";
 
-type PostWithVotes = Prisma.PostGetPayload<{ include: { votes: true } }>;
+type PostWithVotesInfo = Post & {
+  valuation: number | null;
+  myVote: number | null;
+};
 
 export const postRouter = createTRPCRouter({
   create: privateProcedure
@@ -60,54 +63,72 @@ export const postRouter = createTRPCRouter({
   getById: publicProcedure
     .input(z.object({ postId: z.string().optional() }))
     .query(async ({ ctx, input }) => {
-      const post = await ctx.db.post.findFirst({
-        include: {
-          votes: true,
-        },
-        where: {
-          id: input.postId,
-        },
-      });
+      const res = await ctx.db.$queryRaw<PostWithVotesInfo[]>`
+        SELECT
+          p.*, CAST(SUM(v.value) AS SIGNED INTEGER) as valuation,
+          (SELECT
+            v2.value
+          FROM Vote as v2
+          WHERE
+            v2.postId = p.id
+            AND v2.authorId = ${ctx.userId}
+          LIMIT 1) as myVote
+        FROM Post as p
+        LEFT JOIN Vote as v ON v.postId = p.id          
+        WHERE p.id LIKE ${input.postId}
+        GROUP BY p.id
+        LIMIT 1`;
 
-      if (!post) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!res.length) throw new TRPCError({ code: "NOT_FOUND" });
 
-      return await postsWithAuthorAndVotes([post], ctx.userId ?? "");
+      return await postsWithAuthor(res);
     }),
 
   getByUser: publicProcedure
     .input(z.object({ authorId: z.string().optional() }))
     .query(async ({ ctx, input }) => {
-      const posts = await ctx.db.post.findMany({
-        include: {
-          votes: true,
-        },
-        where: {
-          authorId: input.authorId,
-        },
-        orderBy: { createdAt: "desc" },
-        take: 100,
-      });
+      const res = await ctx.db.$queryRaw<PostWithVotesInfo[]>`
+        SELECT
+          p.*, CAST(SUM(v.value) AS SIGNED INTEGER) as valuation,
+          (SELECT
+            v2.value
+          FROM Vote as v2
+          WHERE
+            v2.postId = p.id
+            AND v2.authorId = ${ctx.userId}
+          LIMIT 1) as myVote
+        FROM Post as p
+        LEFT JOIN Vote as v ON v.postId = p.id          
+        WHERE p.authorId LIKE ${input.authorId}
+        GROUP BY p.id
+        ORDER BY p.createdAt DESC
+        LIMIT 100`;
 
-      return await postsWithAuthorAndVotes(posts, ctx.userId ?? "");
+      return await postsWithAuthor(res);
     }),
 
   getLatest: publicProcedure.query(async ({ ctx }) => {
-    const posts = await ctx.db.post.findMany({
-      include: {
-        votes: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    });
+    const res = await ctx.db.$queryRaw<PostWithVotesInfo[]>`
+      SELECT
+          p.*, CAST(SUM(v.value) AS SIGNED INTEGER) as valuation,
+          (SELECT
+            v2.value
+          FROM Vote as v2
+          WHERE
+            v2.postId = p.id
+            AND v2.authorId = ${ctx.userId}
+          LIMIT 1) as myVote
+        FROM Post as p
+        LEFT JOIN Vote as v ON v.postId = p.id
+        GROUP BY p.id
+        ORDER BY p.createdAt DESC
+        LIMIT 100`;
 
-    return await postsWithAuthorAndVotes(posts, ctx.userId ?? "");
+    return await postsWithAuthor(res);
   }),
 });
 
-const postsWithAuthorAndVotes = async (
-  posts: PostWithVotes[],
-  currentUserId: string,
-) => {
+const postsWithAuthor = async (posts: PostWithVotesInfo[]) => {
   const users = (
     await clerkClient.users.getUserList({
       userId: posts.reduce<string[]>(
@@ -126,25 +147,9 @@ const postsWithAuthorAndVotes = async (
         message: "Post author not found",
       });
 
-    // final valuation across all the votes
-    // @TODO: this calculations should be DB queries
-    let valuation = 0;
-    let myVote = 0;
-
-    post.votes.forEach((v: Vote) => {
-      // save current user vote for later
-      if (v.authorId === currentUserId && v.value) {
-        myVote = v.value;
-      }
-      // cumulate value
-      valuation += v.value;
-    });
-
     return {
       post,
       author,
-      valuation,
-      myVote,
     };
   });
 };

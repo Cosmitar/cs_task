@@ -13,7 +13,7 @@ dayjs.extend(relativeTime);
 type PostAndUser = RouterOutputs["post"]["getById"][number];
 export default function PostView(props: PostAndUser) {
   const [voting, setVoting] = useState(false);
-  const { post, author, valuation, myVote } = props;
+  const { post, author } = props;
 
   const ctx = api.useUtils();
   const votePost = api.post.vote.useMutation({
@@ -24,7 +24,10 @@ export default function PostView(props: PostAndUser) {
   });
 
   const auth = useUser();
-  const canVote = auth.isSignedIn && !voting && !myVote;
+  const canVote = auth.isSignedIn && !voting && !post.myVote;
+
+  const valuation = Number(post.valuation);
+  const myVote = post.myVote ?? 0;
 
   return (
     <>

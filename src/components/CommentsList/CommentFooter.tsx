@@ -10,7 +10,7 @@ import { buildPath } from "./helpers";
 
 export default function CommentFooter({ data }: { data: FullCommentData }) {
   const [voting, setVoting] = useState(false);
-  const { comment, valuation, myVote } = data;
+  const { comment } = data;
   const [showForm, setShowForm] = useState(false);
 
   const ctx = api.useUtils();
@@ -22,7 +22,10 @@ export default function CommentFooter({ data }: { data: FullCommentData }) {
   });
 
   const auth = useUser();
-  const canVote = auth.isSignedIn && !voting && !myVote;
+  const canVote = auth.isSignedIn && !voting && !comment.myVote;
+
+  const myVote = comment.myVote ?? 0
+  const valuation = Number(comment.valuation);
 
   return (
     <>
